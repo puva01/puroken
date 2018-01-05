@@ -4,7 +4,8 @@ import numpy as np
 
 cap = cv2.VideoCapture(0)
 
-while(1):
+count = 0
+while count<100:
 
     # Take each frame
     _, frame = cap.read()
@@ -38,6 +39,7 @@ while(1):
     cv2.imshow('frame',frame)
     cv2.imshow('mask',mask)
     cv2.imshow('res',res)
+    count +=1
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
