@@ -24,10 +24,15 @@ while(1):
     res = cv2.bitwise_and(frame,frame, mask= mask)
     image,contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     areas = []
-    for contour in contours:
-        epsilon = 0.08*cv2.arcLength(contour,True)
-        approx = cv2.approxPolyDP(contour,epsilon,True)
-        areas.append(np.array(approx))
+    contours.sort(key=cv2.contourArea,reverse=True)
+    cnt = contours[0]
+    epsilon = 0.08*cv2.arcLength(cnt,True)
+    approx = cv2.approxPolyDP(cnt,epsilon,True)
+    areas.append(np.array(approx))
+    #for contour in contours:
+    #    epsilon = 0.08*cv2.arcLength(contour,True)
+    #    approx = cv2.approxPolyDP(contour,epsilon,True)
+    #    areas.append(np.array(approx))
 
     cv2.drawContours(res, areas, -1, (0,0,255), 3)
     cv2.imshow('frame',frame)
