@@ -1,37 +1,41 @@
+#coding: UTF-8
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
-# areas = [[[732, 137]],[[374, 157]],[[400, 447]],[[739, 424]]]
+def revision(pts1,pts2,img):
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+    inv_M =np.linalg.inv(M)
+    dst = cv2.warpPerspective(img,inv_M,(320,190))
+    return dst
 
+img = cv2.imread('testimg.png',1)
+#オリジナル画像の中心付近の四角形
+pts0 = np.float32([[125,75],[160,75],[125,114],[160,114]])
+#x方向に±20移動してみる
+pts1 = np.float32([[125+20,75],[160+20,75],[125+20,114],[160+20,114]])
+pts2 = np.float32([[125-20,75],[160-20,75],[125-20,114],[160-20,114]])
+#拡大してみる
+pts3 = np.float32([[125-5,75-5],[160+5,75-5],[125-5,114+5],[160+5,114+5]])
+#台形
+pts4 = np.float32([[120,60],[165,60],[125,114],[160,114]])
 
+dst0 = revision(pts0,pts1,img)
+dst1 = revision(pts0,pts2,img)
+dst2 = revision(pts0,pts3,img)
+dst3 = revision(pts0,pts4,img)
+plt.subplot(231),plt.imshow(img),plt.title('Input')
+plt.subplot(232),plt.imshow(dst0),plt.title('Output0')
+plt.subplot(233),plt.imshow(dst1),plt.title('Output1')
+plt.subplot(234),plt.imshow(dst2),plt.title('Output2')
+plt.subplot(235),plt.imshow(dst3),plt.title('Output3')
+plt.show()
 
-areas = [[[[791, 375]],
-
-       [[429, 371]],
-
-       [[437, 657]],
-
-       [[790, 553]]], "dtype=int32"]
-
-pts1 = np.float32([[120,36],[280,36],[120,190],[280,190]])
-
-k = (pts1[3][0]-pts1[2][0])/(areas[0][3][0][0]-areas[0][2][0][0])
-h1 = (areas[0][1][0][1]-areas[0][2][0][1])*k
-h2 = (areas[0][0][0][1]-areas[0][3][0][1])*k
-delta1 = (areas[0][2][0][0]-areas[0][1][0][0])*k
-delta2 = (areas[0][0][0][0]-areas[0][3][0][0])*k
-x1 = pts1[2]+[-delta1,-h1]
-x2 = pts1[3]+[delta2,-h2]
-pts2 = np.float32(x1,x2,pts1[2],pts1[3])
-print x1
-
-
-
-
-print len(areas[0][0])
-
-pts1 = np.float32([[120,36],[280,36],[120,190],[280,190]])
-
-
-#k = (pts1[3][0]-pts1[2][0])/(areas[3][0][0]-areas[2][0][0])
-# print k
+'''
+結果
+･射影変換は，移動先(pts2)に向かって平行移動する．したがって，射影行列の逆行列を使うと，pts2の平行移動と逆方向に平行移動する
+･拡大に対しては拡大(逆行列では縮小)．
+･画像中の部分的な4点の射影変換に対し，画像全体が歪み修正される．
+結論
+.pts1,pts2の面積および位置関係は大体同様である必要がある．
+'''
