@@ -9,15 +9,19 @@ from operator import itemgetter
 def getPts(areas):
     #ブルーの元画像の頂点．findContoursで見つけてくる．
     img_area,_,_ = getBlue(img)
-    x0=img_area[0][0][0][0]
-    y0=img_area[0][0][0][1]
-    x1=img_area[0][1][0][0]
-    y1=img_area[0][1][0][1]
-    x2=img_area[0][2][0][0]
-    y2=img_area[0][2][0][1]
-    x3=img_area[0][3][0][0]
-    y3=img_area[0][3][0][1]
-    pts1 = np.float32([[120,36],[280,36],[120,190],[280,190]])
+    x00=img_area[0][0][0][0]
+    y00=img_area[0][0][0][1]
+    x11=img_area[0][1][0][0]
+    y11=img_area[0][1][0][1]
+    x22=img_area[0][2][0][0]
+    y22=img_area[0][2][0][1]
+    x33=img_area[0][3][0][0]
+    y33=img_area[0][3][0][1]
+    p00 = [x00,y00]#左上
+    p11 = [x11,y11]#左下
+    p22 = [x22,y22]#右下
+    p33 = [x33,y33]#右上
+    pts1 = np.float32([p00,p33,p11,p22]) #areasと同じ順　(左上，右上，左下，右下)
     #areasの格納が普通の配列じゃないので，配列に書き直す．
     x0=areas[0][0][0][0]
     y0=areas[0][0][0][1]
@@ -76,7 +80,7 @@ def getBlue(image):
     approx = cv2.approxPolyDP(cnt,epsilon,True)
     # areas.append(np.array(approx))
     areas.append(approx)
-    return (areas,res,cnt)
+    return areas,res,cnt
 
 #輪郭の重心を計算
 def center_of_image(image):
@@ -87,7 +91,7 @@ def center_of_image(image):
     return x,y
 
 
-img = cv2.imread("blue.png",1)
+img = cv2.imread("bluerect.png",1)
 cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
 #↓ラズパイ(opencv2)の方でやらないとなぜか動かない(PCはopencv3)
 #cv2.setWindowProperty("img", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
