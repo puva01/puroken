@@ -7,6 +7,16 @@ from operator import itemgetter
 
 #オリジナル画像に対応した台形座標取得
 def getPts(areas):
+    #ブルーの元画像の頂点．これもfindContoursで見つけて書き直す．
+    # areas_img,_,_ = getBlue(img)
+    # x0=areas[0][0][0][0]
+    # y0=areas[0][0][0][1]
+    # x1=areas[0][1][0][0]
+    # y1=areas[0][1][0][1]
+    # x2=areas[0][2][0][0]
+    # y2=areas[0][2][0][1]
+    # x3=areas[0][3][0][0]
+    # y3=areas[0][3][0][1]
     pts1 = np.float32([[120,36],[280,36],[120,190],[280,190]])
     #areasの格納が普通の配列じゃないので，配列に書き直す．
     x0=areas[0][0][0][0]
@@ -49,15 +59,15 @@ def getBlue(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     smooth=cv2.GaussianBlur(hsv,(15,15),0)
 
-    # define range of blue color in HSV
-    lower_blue = np.array([110,50,50])
-    upper_blue = np.array([130,255,255])
+    # define range of blue color in HSV　(第1引数を110〜130→90〜140に変更)
+    lower_blue = np.array([90,50,50])
+    upper_blue = np.array([140,255,255])
 
     # Threshold the HSV image to get only blue colors
     mask = cv2.inRange(smooth, lower_blue, upper_blue)
 
     # Bitwise-AND mask and original image(白黒画像の中で，白の部分だけ筒抜けになって映る)
-    res = cv2.bitwise_and(frame,frame, mask= mask)
+    res = cv2.bitwise_and(image,image, mask= mask)
     image,contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     areas = []
     contours.sort(key=cv2.contourArea,reverse=True)
@@ -66,11 +76,23 @@ def getBlue(image):
     approx = cv2.approxPolyDP(cnt,epsilon,True)
     # areas.append(np.array(approx))
     areas.append(approx)
-    return (areas,res)
+    return (areas,res,cnt)
+
+#輪郭の重心を計算
+def center_of_image(image):
+    _,_,cnt = getBlue(image)
+    M = cv2.moments(cnt)
+    x = int(M['m10']/M['m00'])
+    y = int(M['m01']/M['m00'])
+    return x,y
+
 
 img = cv2.imread("blue.png",1)
 cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
+#↓ラズパイ(opencv2)の方でやらないとなぜか動かない(PCはopencv3)
 #cv2.setWindowProperty("img", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
+
+
 
 
 capture = cv2.VideoCapture(0)
@@ -81,18 +103,29 @@ while capture.isOpened():
     ret, frame = capture.read()
 
     if ret :
-        areas,res = getBlue(frame)
+        areas,res,_= getBlue(frame)
         cv2.drawContours(res, areas, -1, (0,0,255), 3)
+        x, y = center_of_image(frame)
+        cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
         cv2.imshow('frame',frame)
         cv2.imshow('res',res)
         if len(areas[0])==4 :
             pts1,pts2,x1,x2,k,delta1,h1,h2,area = getPts(areas)
-            print ('h1:{}'.format(h1))
-            print ('h2:{}'.format(h2))
-            print ('area:{}'.format(area))
-            print ('pts2:{}'.format(pts2))
+            # print ('h1:{}'.format(h1))
+            # print ('h2:{}'.format(h2))
+            # print ('area:{}'.format(area))
+            # print ('pts2:{}'.format(pts2))
             dst = revision(pts1,pts2,img)
+            #frame上の重心をimg上の重心に変換
+            m1,n1 = frame.shape[:2]
+            m2,n2 = img.shape[:2]
+            X = int(x*m2/m1)
+            Y = int(y*n2/n1)
+            #print m1,m2,X
+            cv2.circle(dst, (X,Y), 10, (0, 0, 255), -1)
             cv2.imshow('img',dst)
+
+
 
 #waitKeyの引数を0以下にするとキー入力する毎に画面がframeが更新する．
     if cv2.waitKey(1) &  0xFF == ord('q'):
@@ -100,6 +133,3 @@ while capture.isOpened():
 
 capture.release()
 cv2.destroyAllWindows()
-
-# cv2.imshow('img',img)
-# cv2.waitKey(-1)
