@@ -8,6 +8,7 @@ def find_rect_of_target_color(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV_FULL)
     h = hsv[:, :, 0]
     s = hsv[:, :, 1]
+    smooth=cv2.GaussianBlur(hsv,(11,11),0)
     mask = np.zeros(h.shape, dtype=np.uint8)
     #Extract red parts from image
     mask[((h < 20) | (h > 200)) & (s > 128)] = 255
