@@ -54,7 +54,7 @@ def getPts(areas):
 def revision(pts1,pts2,img):
     M = cv2.getPerspectiveTransform(pts1,pts2)
     inv_M =np.linalg.inv(M)
-    dst = cv2.warpPerspective(img,inv_M,(600,400))
+    dst = cv2.warpPerspective(img,inv_M,(800,500))
     return dst
 
 #青の輪郭を取ってくる関数
@@ -91,8 +91,11 @@ def center_of_image(image):
     return x,y
 
 
-img = cv2.imread("bluerect.png",1)
+img = cv2.imread("bluerect2.png",1)
 cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
+areas0,res0,_= getBlue(img)
+cv2.drawContours(res0, areas0, -1, (0,0,255), 3)
+cv2.imshow("img0",img)
 #↓ラズパイ(opencv2)の方でやらないとなぜか動かない(PCはopencv3)
 #cv2.setWindowProperty("img", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
 
@@ -107,6 +110,7 @@ while capture.isOpened():
     ret, frame = capture.read()
 
     if ret :
+        #frameから輪郭をとる
         areas,res,_= getBlue(frame)
         cv2.drawContours(res, areas, -1, (0,0,255), 3)
         x, y = center_of_image(frame)
@@ -115,10 +119,6 @@ while capture.isOpened():
         cv2.imshow('res',res)
         if len(areas[0])==4 :
             pts1,pts2,x1,x2,k,delta1,h1,h2,area = getPts(areas)
-            # print ('h1:{}'.format(h1))
-            # print ('h2:{}'.format(h2))
-            # print ('area:{}'.format(area))
-            # print ('pts2:{}'.format(pts2))
             dst = revision(pts1,pts2,img)
             #frame上の重心をimg上の重心に変換
             m1,n1 = frame.shape[:2]
