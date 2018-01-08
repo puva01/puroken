@@ -7,16 +7,16 @@ from operator import itemgetter
 
 #オリジナル画像に対応した台形座標取得
 def getPts(areas):
-    #ブルーの元画像の頂点．これもfindContoursで見つけて書き直す．
-    # areas_img,_,_ = getBlue(img)
-    # x0=areas[0][0][0][0]
-    # y0=areas[0][0][0][1]
-    # x1=areas[0][1][0][0]
-    # y1=areas[0][1][0][1]
-    # x2=areas[0][2][0][0]
-    # y2=areas[0][2][0][1]
-    # x3=areas[0][3][0][0]
-    # y3=areas[0][3][0][1]
+    #ブルーの元画像の頂点．findContoursで見つけてくる．
+    img_area,_,_ = getBlue(img)
+    x0=img_area[0][0][0][0]
+    y0=img_area[0][0][0][1]
+    x1=img_area[0][1][0][0]
+    y1=img_area[0][1][0][1]
+    x2=img_area[0][2][0][0]
+    y2=img_area[0][2][0][1]
+    x3=img_area[0][3][0][0]
+    y3=img_area[0][3][0][1]
     pts1 = np.float32([[120,36],[280,36],[120,190],[280,190]])
     #areasの格納が普通の配列じゃないので，配列に書き直す．
     x0=areas[0][0][0][0]
