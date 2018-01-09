@@ -54,7 +54,7 @@ def getPts(areas):
 def revision(pts1,pts2,img):
     M = cv2.getPerspectiveTransform(pts1,pts2)
     inv_M =np.linalg.inv(M)
-    dst = cv2.warpPerspective(img,inv_M,(800,500))
+    dst = cv2.warpPerspective(img,inv_M,(1000,800))
     return dst
 
 #青の輪郭を取ってくる関数
@@ -91,7 +91,27 @@ def center_of_image(image):
     return x,y
 
 
-img = cv2.imread("bluerect2.png",1)
+#backをforeを中心から(x,y)移動させて重ね合わせる
+def clip_image(x, y):
+    # global back
+    # w1, h1, _ = back.shape
+    # w2, h2, _ = img.shape
+    # X = int((w1-w2)/2)
+    # Y = int((h1-h2)/2)
+    # back[X+x:X+w2+x, Y+y:Y+h2+y] = img
+    global back
+    b_h, b_w, _ = back.shape
+    f_h, f_w, _ = fore.shape
+    f_w = min(f_w, b_w - x)
+    f_h = min(f_h, b_h - y)
+    s_x = min(max(-x,0), f_w)
+    s_y = min(max(-y,0), f_h)
+    back[max(y,0):y + f_h, max(x,0):x + f_w] = fore[s_y:s_y + f_h, s_x:s_x + f_w]
+
+#imgに青い輪郭がないものを選ぶとエラーが出る．
+img = cv2.imread("blue.png",1)
+back = cv2.imread("back.png",1)
+
 cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
 areas0,res0,_= getBlue(img)
 cv2.drawContours(res0, areas0, -1, (0,0,255), 3)
@@ -99,12 +119,11 @@ cv2.imshow("img0",img)
 #↓ラズパイ(opencv2)の方でやらないとなぜか動かない(PCはopencv3)
 #cv2.setWindowProperty("img", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
 
-
-
-
 capture = cv2.VideoCapture(0)
 
 count = 0
+l = []
+m = []
 # isOpenedの代わりにTrueを使うと，frameがemptyのときエラーを吐く
 while capture.isOpened():
     ret, frame = capture.read()
@@ -112,23 +131,48 @@ while capture.isOpened():
     if ret :
         #frameから輪郭をとる
         areas,res,_= getBlue(frame)
+        #輪郭を書き込む
         cv2.drawContours(res, areas, -1, (0,0,255), 3)
+        #webcamera輪郭の重心計算
         x, y = center_of_image(frame)
         cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
+
         cv2.imshow('frame',frame)
         cv2.imshow('res',res)
+
         if len(areas[0])==4 :
+            #webカメラ上の輪郭を取得
             pts1,pts2,x1,x2,k,delta1,h1,h2,area = getPts(areas)
             dst = revision(pts1,pts2,img)
+
             #frame上の重心をimg上の重心に変換
             m1,n1 = frame.shape[:2]
             m2,n2 = img.shape[:2]
             X = int(x*m2/m1)
             Y = int(y*n2/n1)
-            #print m1,m2,X
-            cv2.circle(dst, (X,Y), 10, (0, 0, 255), -1)
-            cv2.imshow('img',dst)
 
+            #取得した輪郭の重心を計算し，丸を描く
+            cv2.circle(dst, (X,Y), 10, (0, 0, 255), -1)
+            cv2.imshow('dst',dst)
+            print areas
+            print pts2
+
+            #重心をリストに保存してく
+            l.append(x)
+            m.append(y)
+            count +=1
+
+            x_diff = l[count-1]-l[0]
+            y_diff = m[count-1]-m[0]
+            print x_diff
+            # clip_image(x_diff,y_diff)
+            #cv2.imshow("img",back)
+            """
+            x_diff = l[count-1]-l[0]
+            y_diff = m[count-1]-m[0]
+            clip_image(x_diff,y_diff)
+            cv2.imshow("img",back)
+            """
 
 
 #waitKeyの引数を0以下にするとキー入力する毎に画面がframeが更新する．
