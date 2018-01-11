@@ -122,36 +122,27 @@ def clip_image(x, y):
         back[Y+y:Y+h2+y,X+X:X+w2+X,] = img
         #-xではみ出す，
     elif -x >=X and abs(y)<Y:
-        back[Y+y:Y+h2+y,0:X+w2] = img
+        back[Y+y:Y+h2+y,0:w2] = img
         #+yではみ出す，
     elif abs(x)<X and y>=Y:
         back[Y+Y:Y+h2+Y,X+x:X+w2+x] = img
         #-yではみ出す，
-    elif -x >=X and abs(y)>Y:
-        back[0:Y+h2,X+x:X+w2+x] = img
+    elif abs(x)<X and -y>Y:
+        back[0:h2,X+x:X+w2+x] = img
         #+x，+yではみ出す，
     elif x >=X and y>=Y:
         back[Y+Y:Y+h2+Y,X+X:X+X+w2] = img
         #-x,+yではみ出す，
     elif -x >=X and y>=Y:
-        back[Y+Y:Y+h2+Y,0:X+w2] = img
+        back[Y+Y:Y+h2+Y,0:w2] = img
         #+x,+yではみ出す，
     elif x >=X and y>=Y:
         back[Y:Y+h2+Y,X+X:X+X+w2] = img
         #+x,-yではみ出す，
     elif x >=X and -y>=Y:
-        back[0:Y+h2,X+X:X+X+w2] = img
+        back[0:h2,X+X:X+X+w2] = img
 
 
-
-    # global back
-    # b_h, b_w = back.shape[:2]
-    # f_h, f_w = img.shape[:2]
-    # f_w = min(f_w, b_w - x)
-    # f_h = min(f_h, b_h - y)
-    # s_x = min(max(-x,0), f_w)
-    # s_y = min(max(-y,0), f_h)
-    # back[max(y,0):y + f_h, max(x,0):x + f_w] = img[s_y:s_y + f_h, s_x:s_x + f_w]
 
 #imgに青い輪郭がないものを選ぶとエラーが出る．
 #img = cv2.imread("bluerect2.png",1)
@@ -198,6 +189,8 @@ while capture.isOpened():
                         y_diff = m[count-1]-m[5]
                         m1,n1 = frame.shape[:2]
                         m2,n2 = back.shape[:2]
+                        #背景をリセットしてからオーバーレイ
+                        back = cv2.imread("back.png",1)
                         clip_image(x_diff*m2/m1,y_diff*m2/m1)
 
                         cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
