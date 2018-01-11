@@ -69,7 +69,7 @@ def getTarget(image):
     #upper_blue = np.array([140,255,255])
 
     #黄色
-    lower_blue = np.array([25,80,85])
+    lower_blue = np.array([25,100,85])
     upper_blue = np.array([100,255,255])
     #赤
     # h = hsv[:, :, 0]
@@ -110,20 +110,48 @@ def center_of_image(image):
 
 #backをforeを中心から(x,y)移動させて重ね合わせる
 def clip_image(x, y):
-    # global back
-    # w1, h1, _ = back.shape
-    # w2, h2, _ = img.shape
-    # X = int((w1-w2)/2)
-    # Y = int((h1-h2)/2)
-    # back[X+x:X+w2+x, Y+y:Y+h2+y] = img
     global back
-    b_h, b_w, _ = back.shape
-    f_h, f_w, _ = img.shape
-    f_w = min(f_w, b_w - x)
-    f_h = min(f_h, b_h - y)
-    s_x = min(max(-x,0), f_w)
-    s_y = min(max(-y,0), f_h)
-    back[max(y,0):y + f_h, max(x,0):x + f_w] = img[s_y:s_y + f_h, s_x:s_x + f_w]
+    h1, w1, _ = back.shape
+    h2, w2, _ = img.shape
+    X = int((w1-w2)/2)
+    Y = int((h1-h2)/2)
+    if abs(x)< X and abs(y)<Y:
+        back[Y+y:Y+h2+y,X+x:X+w2+x] = img
+        #+xではみ出す，
+    elif x >=X and abs(y)<Y:
+        back[Y+y:Y+h2+y,X+X:X+w2+X,] = img
+        #-xではみ出す，
+    elif -x >=X and abs(y)<Y:
+        back[Y+y:Y+h2+y,0:X+w2] = img
+        #+yではみ出す，
+    elif abs(x)<X and y>=Y:
+        back[Y+Y:Y+h2+Y,X+x:X+w2+x] = img
+        #-yではみ出す，
+    elif -x >=X and abs(y)>Y:
+        back[0:Y+h2,X+x:X+w2+x] = img
+        #+x，+yではみ出す，
+    elif x >=X and y>=Y:
+        back[Y+Y:Y+h2+Y,X+X:X+X+w2] = img
+        #-x,+yではみ出す，
+    elif -x >=X and y>=Y:
+        back[Y+Y:Y+h2+Y,0:X+w2] = img
+        #+x,+yではみ出す，
+    elif x >=X and y>=Y:
+        back[Y:Y+h2+Y,X+X:X+X+w2] = img
+        #+x,-yではみ出す，
+    elif x >=X and -y>=Y:
+        back[0:Y+h2,X+X:X+X+w2] = img
+
+
+
+    # global back
+    # b_h, b_w = back.shape[:2]
+    # f_h, f_w = img.shape[:2]
+    # f_w = min(f_w, b_w - x)
+    # f_h = min(f_h, b_h - y)
+    # s_x = min(max(-x,0), f_w)
+    # s_y = min(max(-y,0), f_h)
+    # back[max(y,0):y + f_h, max(x,0):x + f_w] = img[s_y:s_y + f_h, s_x:s_x + f_w]
 
 #imgに青い輪郭がないものを選ぶとエラーが出る．
 #img = cv2.imread("bluerect2.png",1)
@@ -151,8 +179,8 @@ while capture.isOpened():
         #frameから輪郭をとる
         areas,res,_= getTarget(frame)
         cv2.imshow('frame',frame)
-        print len(areas[0])
-        print areas
+        #print len(areas[0])
+        #print areas
 
         if areas:
             if len(areas[0])==4 :
@@ -168,21 +196,23 @@ while capture.isOpened():
                     if count>5:
                         x_diff = l[count-1]-l[5]
                         y_diff = m[count-1]-m[5]
-                        print x_diff
-                        clip_image(x_diff,y_diff)
+                        m1,n1 = frame.shape[:2]
+                        m2,n2 = back.shape[:2]
+                        clip_image(x_diff*m2/m1,y_diff*m2/m1)
+
+                        cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
+                        #frame上の重心をimg上の重心に変換
+                        m1,n1 = frame.shape[:2]
+                        m2,n2 = back.shape[:2]
+
+                        X = int(x*m2/m1)
+                        Y = int(y*n2/n1)
+                        #取得した輪郭の重心を計算し，丸を描く
+                        # cv2.circle(back, (X,Y), 10, (0, 0, 255), -1)
 
 
-                cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
-                #frame上の重心をimg上の重心に変換
-                m1,n1 = frame.shape[:2]
-                m2,n2 = img.shape[:2]
-                X = int(x*m2/m1)
-                Y = int(y*n2/n1)
-                #取得した輪郭の重心を計算し，丸を描く
-                cv2.circle(back, (X,Y), 10, (0, 0, 255), -1)
-
-    cv2.imshow('res',res)
-    cv2.imshow('img',back)
+        cv2.imshow('res',res)
+        cv2.imshow('img',back)
 
             #webカメラ上の輪郭を取得,台形補正画像生成
             # pts1,pts2,x1,x2,k,delta1,h1,h2,area = getPts(areas)
