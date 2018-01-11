@@ -17,7 +17,7 @@ min_area=10000
 max_area=100000
 #object_contours= [cnt for cnt in contours if max_area>cv2.contourArea(cnt) > min_area]
 areas = []
-object_contours= [cnt for cnt in contours if cv2.contourArea(cnt) > 1000]
+#object_contours= [cnt for cnt in contours if cv2.contourArea(cnt) > 1000]
 
 #perimeter = cv2.arcLength(object_contours[0],True)
 epsilon = 0.1*cv2.arcLength(object_contours[0],True)
