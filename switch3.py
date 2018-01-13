@@ -17,11 +17,15 @@ img3 = cv2.imread("switchoff-1.jpg")
 # GPIO初期化
 wiringpi.wiringPiSetupGpio()
 # GPIOを出力モード（1）に設定
-wiringpi.pinMode( button_pin, 0 )
+wiringpi.pinMode( button_pin1, 0 )
+wiringpi.pinMode( button_pin2, 0 )
+
 # 端子に何も接続されていない場合の状態を設定
 # 3.3Vの場合には「2」（プルアップ）
 # 0Vの場合は「1」と設定する（プルダウン）
-wiringpi.pullUpDnControl( button_pin, 2 )
+wiringpi.pullUpDnControl( button_pin1, 2 )
+wiringpi.pullUpDnControl( button_pin2, 2 )
+
 #cv2.namedWindow("img", cv2.WINDOW_KEEPRATIO | cv2.WINDOW_NORMAL)
 # cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
 # cv2.setWindowProperty("img", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
@@ -46,5 +50,5 @@ while True:
         cv2.waitKey(1000)
     time.sleep(0.05)
 
-    if cv2.waitKey(1) &  0xFF == ord('q'):
+    if cv2.waitKey(-1) &  0xFF == ord('q'):
         break

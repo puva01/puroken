@@ -157,13 +157,23 @@ areas0,res0,_= getTarget(img)
 cv2.drawContours(res0, areas0, -1, (0,0,255), 3)
 cv2.imshow("img0",img)
 
+button_pin1 = 17 # 11番端子
+button_pin2 = 27 # 13番端子
+button_pin3 = 22 # 15番端子
+
+
+# GPIO初期化
 wiringpi.wiringPiSetupGpio()
 # GPIOを出力モード（1）に設定
-wiringpi.pinMode( button_pin, 0 )
+wiringpi.pinMode( button_pin1, 0 )
+wiringpi.pinMode( button_pin2, 0 )
+wiringpi.pinMode( button_pin3, 0 )
 # 端子に何も接続されていない場合の状態を設定
 # 3.3Vの場合には「2」（プルアップ）
 # 0Vの場合は「1」と設定する（プルダウン）
-wiringpi.pullUpDnControl( button_pin, 2 )
+wiringpi.pullUpDnControl( button_pin1, 2 )
+wiringpi.pullUpDnControl( button_pin2, 2 )
+wiringpi.pullUpDnControl( button_pin3, 2 )
 
 #↓ラズパイ(opencv2)の方でやらないとなぜか動かない(PCはopencv3)
 # cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
@@ -307,7 +317,7 @@ while capture.isOpened():
             cv2.imshow('img',back4)
 
         #スイッチOFFが押された場合．
-        elif wiringpi.digitalRead(button_pin) == 0:
+        else:
             cv2.imshow('img',back1)
 
         cv2.waitKey(-1)
