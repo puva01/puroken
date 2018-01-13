@@ -152,10 +152,11 @@ back2 = cv2.imread("back.png",1)
 back3 = cv2.imread("back.png",1)
 back4 = cv2.imread("back.png",1)
 
+calibration_img = cv2.imread("calibration.png",1)
+
+
 cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
-areas0,res0,_= getTarget(img)
-cv2.drawContours(res0, areas0, -1, (0,0,255), 3)
-cv2.imshow("img0",img)
+
 
 button_pin1 = 17 # 11番端子
 button_pin2 = 27 # 13番端子
@@ -196,12 +197,14 @@ while capture.isOpened():
         areas,res,_= getTarget(frame)
         cv2.imshow('frame',frame)
         #キャリブレーションボタンが押された場合，射影変換行列を計算
-        if #wiringpi.digitalRead(button_pin) == ?:
+        if #wiringpi.digitalRead(button_pin) == 0:
+            cv2.imshow("img",)
+            time.sleep(3)
             areas,_,_=getBlue(frame)
             M = calibration(areas)
 
         #スイッチ1が押された場合．
-        if wiringpi.digitalRead(button_pin) == 1:
+        if wiringpi.digitalRead(button_pin1) == 0:
             #キャリブレーションボタンを押していた場合，画像を台形補正．
             if　M:
                 img1 = revision(M,img1)
@@ -230,7 +233,7 @@ while capture.isOpened():
             cv2.imshow('img',back1)
 
         #スイッチ2が押された場合．
-        elif wiringpi.digitalRead(button_pin) == 2:
+        elif wiringpi.digitalRead(button_pin2) == 0:
             #キャリブレーションボタンを押していた場合，画像を台形補正．
             if　M:
                 img2 = revision(M,img2)
@@ -259,7 +262,7 @@ while capture.isOpened():
             cv2.imshow('img',back2)
 
         #スイッチ3が押された場合．
-        elif wiringpi.digitalRead(button_pin) == 3:
+        elif wiringpi.digitalRead(button_pin3) == 0:
             #キャリブレーションボタンを押していた場合，画像を台形補正．
             if　M:
                 img3 = revision(M,img3)
@@ -288,7 +291,7 @@ while capture.isOpened():
             cv2.imshow('img',back3)
 
         #スイッチ4が押された場合．
-        elif wiringpi.digitalRead(button_pin) == 4:
+        elif wiringpi.digitalRead(button_pin4) == 0:
             #キャリブレーションボタンを押していた場合，画像を台形補正．
             if　M:
                 img4 = revision(M,img4)
@@ -324,7 +327,7 @@ while capture.isOpened():
 
 
 #waitKeyの引数を0以下にするとキー入力する毎に画面がframeが更新する．
-    if cv2.waitKey(1) &  0xFF == ord('q'):
+    if cv2.waitKey(-1) &  0xFF == ord('q'):
         break
 
 capture.release()
