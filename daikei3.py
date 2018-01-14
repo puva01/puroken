@@ -31,11 +31,12 @@ def calibration(areas):
     k = (pts1[3][0]-pts1[2][0])/(area[2][0]-area[1][0])
     h = (area[1][1]-area[0][1])*k
     delta = (area[1][0]-area[0][0])*k
-    x1 = pts1[2]+[-delta,-h1]
-    x2 = pts1[3]+[delta,-h2]
+    x1 = pts1[2]+[-delta,-h]
+    x2 = pts1[3]+[delta,-h]
     pts2 = np.float32([x1,x2,pts1[2],pts1[3]])
     M = cv2.getPerspectiveTransform(pts1,pts2)
     return M
+
 
 #台形補正画像を生成する関数
 def revision(M,img):
@@ -56,7 +57,7 @@ def getTarget(image):
     mask = cv2.inRange(smooth, lower_blue, upper_blue)
 
     # Bitwise-AND mask and original image(白黒画像の中で，白の部分だけ筒抜けになって映る)
-    res = cv2.bitwise_and(image,image, mask= mask)
+    res = cv2.bitwise_and(frame,frame, mask= mask)
     image,contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     areas = []
     contours.sort(key=cv2.contourArea,reverse=True)
@@ -146,21 +147,28 @@ def clip_image(x, y, back, fore):
 ここまで関数定義
 """
 
-#画像の数だけbackが必要
+#無地
 back1 = cv2.imread("back.png",1)
-back2 = cv2.imread("back.png",1)
-back3 = cv2.imread("back.png",1)
-back4 = cv2.imread("back.png",1)
+
+
+img_right = cv2.imread("back.png",1)
+img_left = cv2.imread("",1)
+img_stop = cv2.imread("",1)
+img_ = cv2.imread("",1)
+
 
 calibration_img = cv2.imread("calibration.png",1)
-
-
 cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
+# cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
+# cv2.setWindowProperty("img", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
 
 
-button_pin1 = 17 # 11番端子
-button_pin2 = 27 # 13番端子
-button_pin3 = 22 # 15番端子
+button_pin1 = 7 # 7番端子
+button_pin2 = 17 # 11番端子
+button_pin3 = 27 # 13番端子
+button_pin4 = 22 # 15番端子
+button_pin5 = 10 # 19番端子
+
 
 
 # GPIO初期化
@@ -169,12 +177,17 @@ wiringpi.wiringPiSetupGpio()
 wiringpi.pinMode( button_pin1, 0 )
 wiringpi.pinMode( button_pin2, 0 )
 wiringpi.pinMode( button_pin3, 0 )
+wiringpi.pinMode( button_pin4, 0 )
+wiringpi.pinMode( button_pin5, 0 )
 # 端子に何も接続されていない場合の状態を設定
 # 3.3Vの場合には「2」（プルアップ）
 # 0Vの場合は「1」と設定する（プルダウン）
 wiringpi.pullUpDnControl( button_pin1, 2 )
 wiringpi.pullUpDnControl( button_pin2, 2 )
 wiringpi.pullUpDnControl( button_pin3, 2 )
+wiringpi.pullUpDnControl( button_pin4, 2 )
+wiringpi.pullUpDnControl( button_pin5, 2 )
+
 
 #↓ラズパイ(opencv2)の方でやらないとなぜか動かない(PCはopencv3)
 # cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
@@ -195,24 +208,33 @@ while capture.isOpened():
     if ret :
         #とりあえず常に黄色の輪郭をとってくるようにする．
         areas,res,_= getTarget(frame)
-        cv2.imshow('frame',frame)
-        #キャリブレーションボタンが押された場合，射影変換行列を計算
-        if #wiringpi.digitalRead(button_pin) == 0:
-            cv2.imshow("img",)
-            time.sleep(3)
-            areas,_,_=getBlue(frame)
-            M = calibration(areas)
+        #キャリブレーションボタンが押された場合(右)3秒間，射影変換行列を計算
+        if wiringpi.digitalRead(button_pin1) == 0 :
+            print ("calibrating...")
+            #3秒間投影し，Mを計算
+            while True:
+                cv2.imshow('img',calibration_img)
+                cv2.waitKey(1)
+                areas,_,_=getBlue(frame)
+                print "areas:{}".format(areas)
+                if len(areas[0])==4:
+                    M = calibration(areas)
+                    print "M:{}".format(M)
+                count2 = count2+1
+                print count2
+                time.sleep(0.5)
+                if count2>5:
+                    break
 
-        #スイッチ1が押された場合．
-        if wiringpi.digitalRead(button_pin1) == 0:
+        #スイッチ2(右)が押された場合．
+        if wiringpi.digitalRead(button_pin2) == 0:
+            print ("turnright")
             #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　M:
-                img1 = revision(M,img1)
+            if　not M==0:
+                img_right = revision(M,img_right)
             #frameから輪郭をとる
             if areas:
                 if len(areas[0])==4 :
-                    #輪郭を書き込む
-                    cv2.drawContours(res, areas, -1, (0,0,255), 3)
                     #webcamera輪郭の重心計算
                     x, y = center_of_image(frame)
                     if not x == 0:
@@ -225,109 +247,102 @@ while capture.isOpened():
                             y_diff = m[count-1]-m[4]
                             m1,n1 = frame.shape[:2]
                             m2,n2 = back.shape[:2]
-
                             #背景をリセットしてからオーバーレイ
-                            back1 = cv2.imread("back1.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img1)
-                            cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
+                            back = cv2.imread("back.png",1)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_right)
+
+            cv2.imshow('img',back)
+
+        #スイッチ3(左)が押された場合．
+        if wiringpi.digitalRead(button_pin3) == 0:
+            print ("turnright")
+            #キャリブレーションボタンを押していた場合，画像を台形補正．
+            if　not M==0:
+                img_left = revision(M,img_left)
+            #frameから輪郭をとる
+            if areas:
+                if len(areas[0])==4 :
+                    #webcamera輪郭の重心計算
+                    x, y = center_of_image(frame)
+                    if not x == 0:
+                        #トラッキング部分．重心の移動差を利用
+                        l.append(x)
+                        m.append(y)
+                        count +=1
+                        if count>4:
+                            x_diff = l[count-1]-l[4]
+                            y_diff = m[count-1]-m[4]
+                            m1,n1 = frame.shape[:2]
+                            m2,n2 = back.shape[:2]
+                            #背景をリセットしてからオーバーレイ
+                            back = cv2.imread("back.png",1)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_left)
+
+            cv2.imshow('img',back)
+
+        #スイッチ4(stop)が押された場合．
+        if wiringpi.digitalRead(button_pin4) == 0:
+            print ("turnright")
+            #キャリブレーションボタンを押していた場合，画像を台形補正．
+            if　not M==0:
+                img_stop = revision(M,img_(stop))
+            #frameから輪郭をとる
+            if areas:
+                if len(areas[0])==4 :
+                    #webcamera輪郭の重心計算
+                    x, y = center_of_image(frame)
+                    if not x == 0:
+                        #トラッキング部分．重心の移動差を利用
+                        l.append(x)
+                        m.append(y)
+                        count +=1
+                        if count>4:
+                            x_diff = l[count-1]-l[4]
+                            y_diff = m[count-1]-m[4]
+                            m1,n1 = frame.shape[:2]
+                            m2,n2 = back.shape[:2]
+                            #背景をリセットしてからオーバーレイ
+                            back = cv2.imread("back.png",1)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_stop)
+
+            cv2.imshow('img',back)
+
+        #スイッチ5(rest)が押された場合．
+        if wiringpi.digitalRead(button_pin5) == 0:
+            print ("rest")
+            #キャリブレーションボタンを押していた場合，画像を台形補正．
+            if　not M==0:
+                img_rest = revision(M,img_rest)
+            #frameから輪郭をとる
+            if areas:
+                if len(areas[0])==4 :
+                    #webcamera輪郭の重心計算
+                    x, y = center_of_image(frame)
+                    if not x == 0:
+                        #トラッキング部分．重心の移動差を利用
+                        l.append(x)
+                        m.append(y)
+                        count +=1
+                        if count>4:
+                            x_diff = l[count-1]-l[4]
+                            y_diff = m[count-1]-m[4]
+                            m1,n1 = frame.shape[:2]
+                            m2,n2 = back.shape[:2]
+                            #背景をリセットしてからオーバーレイ
+                            back = cv2.imread("back.png",1)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_rest)
+
+            cv2.imshow('img',back)
+
+        #スイッチOFFのとき．
+        if wiringpi.digitalRead(button_pin2) == 0:
+            print ("switch off")
+            back = cv2.imread("back.png",1)
             cv2.imshow('img',back1)
-
-        #スイッチ2が押された場合．
-        elif wiringpi.digitalRead(button_pin2) == 0:
-            #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　M:
-                img2 = revision(M,img2)
-            #frameから輪郭をとる
-            if areas:
-                if len(areas[0])==4 :
-                    #輪郭を書き込む
-                    cv2.drawContours(res, areas, -1, (0,0,255), 3)
-                    #webcamera輪郭の重心計算
-                    x, y = center_of_image(frame)
-                    if not x == 0:
-                        #トラッキング部分．重心の移動差を利用
-                        l.append(x)
-                        m.append(y)
-                        count +=1
-                        if count>4:
-                            x_diff = l[count-1]-l[4]
-                            y_diff = m[count-1]-m[4]
-                            m1,n1 = frame.shape[:2]
-                            m2,n2 = back.shape[:2]
-
-                            #背景をリセットしてからオーバーレイ
-                            back2 = cv2.imread("back2.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back2,img2)
-                            cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
-            cv2.imshow('img',back2)
-
-        #スイッチ3が押された場合．
-        elif wiringpi.digitalRead(button_pin3) == 0:
-            #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　M:
-                img3 = revision(M,img3)
-            #frameから輪郭をとる
-            if areas:
-                if len(areas[0])==4 :
-                    #輪郭を書き込む
-                    cv2.drawContours(res, areas, -1, (0,0,255), 3)
-                    #webcamera輪郭の重心計算
-                    x, y = center_of_image(frame)
-                    if not x == 0:
-                        #トラッキング部分．重心の移動差を利用
-                        l.append(x)
-                        m.append(y)
-                        count +=1
-                        if count>4:
-                            x_diff = l[count-1]-l[4]
-                            y_diff = m[count-1]-m[4]
-                            m1,n1 = frame.shape[:2]
-                            m2,n2 = back3.shape[:2]
-
-                            #背景をリセットしてからオーバーレイ
-                            back3 = cv2.imread("back3.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back3,img3)
-                            cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
-            cv2.imshow('img',back3)
-
-        #スイッチ4が押された場合．
-        elif wiringpi.digitalRead(button_pin4) == 0:
-            #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　M:
-                img4 = revision(M,img4)
-            #frameから輪郭をとる
-            if areas:
-                if len(areas[0])==4 :
-                    #輪郭を書き込む
-                    cv2.drawContours(res, areas, -1, (0,0,255), 3)
-                    #webcamera輪郭の重心計算
-                    x, y = center_of_image(frame)
-                    if not x == 0:
-                        #トラッキング部分．重心の移動差を利用
-                        l.append(x)
-                        m.append(y)
-                        count +=1
-                        if count>4:
-                            x_diff = l[count-1]-l[4]
-                            y_diff = m[count-1]-m[4]
-                            m1,n1 = frame.shape[:2]
-                            m2,n2 = back.shape[:2]
-
-                            #背景をリセットしてからオーバーレイ
-                            back4 = cv2.imread("back4.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back4,img4)
-                            cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
-            cv2.imshow('img',back4)
-
-        #スイッチOFFが押された場合．
-        else:
-            cv2.imshow('img',back1)
-
-        cv2.waitKey(-1)
 
 
 #waitKeyの引数を0以下にするとキー入力する毎に画面がframeが更新する．
-    if cv2.waitKey(-1) &  0xFF == ord('q'):
+    if cv2.waitKey(1) &  0xFF == ord('q'):
         break
 
 capture.release()
