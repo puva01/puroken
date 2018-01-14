@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import time
 from operator import itemgetter
-import wiringpi
+#import wiringpi
 import sys
 
 
@@ -32,8 +32,8 @@ def calibration(areas):
     k = (pts1[3][0]-pts1[2][0])/(area[2][0]-area[1][0])
     h = (area[1][1]-area[0][1])*k
     delta = (area[1][0]-area[0][0])*k
-    x1 = pts1[2]+[-delta,-h1]
-    x2 = pts1[3]+[delta,-h2]
+    x1 = pts1[2]+[-delta,-h]
+    x2 = pts1[3]+[delta,-h]
     pts2 = np.float32([x1,x2,pts1[2],pts1[3]])
     M = cv2.getPerspectiveTransform(pts1,pts2)
     return M
@@ -58,6 +58,9 @@ def getBlue(frame):
 
     # Bitwise-AND mask and original image(白黒画像の中で，白の部分だけ筒抜けになって映る)
     res = cv2.bitwise_and(image,image, mask= mask)
+    """
+    opencv2ではimageを消す!!!
+    """
     image,contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     areas = []
     contours.sort(key=cv2.contourArea,reverse=True)
@@ -72,7 +75,7 @@ def getBlue(frame):
 
 
 
-calibration_img = cv2.imread("calibration.png",1)
+calibration_img = cv2.imread("calibration.jpg",1)
 
 button_pin1 = 17 # 11番端子
 button_pin2 = 27 # 11番端子
@@ -91,7 +94,6 @@ wiringpi.pullUpDnControl( button_pin2, 2 )
 
 
 
-
 capture = cv2.VideoCapture(0)
 
 count = 0
@@ -102,20 +104,26 @@ M = []
 # isOpenedの代わりにTrueを使うと，frameがemptyのときエラーを吐く
 while capture.isOpened():
     ret, frame = capture.read()
+    cv2.imshow('frame',frame)
     if ret :
-        cv2.imshow('frame',frame)
         #キャリブレーションボタンが押された場合(右)，射影変換行列を計算
         if wiringpi.digitalRead(button_pin1) == 0:
-            While count2<6:
+            #3秒間投影し，Mを計算
+            while True:
                 cv2.imshow('img',calibration_img)
+                cv2.waitKey(1)
                 areas,_,_=getBlue(frame)
-                M = calibration(areas)
-                count2 = count2+2
+                if areas:
+                    M = calibration(areas)
+                count2 = count2+1
+                time.sleep(0.5)
+                if count >5:
+                    break
         #スイッチ1が押された場合．
-        elif wiringpi.digitalRead(button_pin2) == 0:
+        if wiringpi.digitalRead(button_pin2) == 0:
             #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　M:
-                img1 = revision(M,img1)
+            if not M==[]:
+                img1 = revision(M,calibration_img)
             #frameから輪郭をとる
             cv2.imshow('img',back1)
 
