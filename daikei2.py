@@ -109,7 +109,7 @@ def getTarget(image):
         areas.append(approx)
     else:
         cnt = []
-    return areas,res,cnt,
+    return areas,res,cnt
 
 #台形補正用にwebcameraから輪郭をとってくる．
 def getBlue(frame):
@@ -118,14 +118,14 @@ def getBlue(frame):
     smooth=cv2.GaussianBlur(hsv,(15,15),0)
 
     # define range of blue color in HSV　(第1引数を110〜130→90〜140に変更)
-    lower_blue = np.array([90,50,50])
+    lower_blue = np.array([90,90,90])
     upper_blue = np.array([140,255,255])
 
     # Threshold the HSV image to get only blue colors
     mask = cv2.inRange(smooth, lower_blue, upper_blue)
 
     # Bitwise-AND mask and original image(白黒画像の中で，白の部分だけ筒抜けになって映る)
-    res = cv2.bitwise_and(image,image, mask= mask)
+    res = cv2.bitwise_and(frame,frame, mask= mask)
     image,contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     areas = []
     contours.sort(key=cv2.contourArea,reverse=True)
@@ -136,23 +136,28 @@ def getBlue(frame):
         areas.append(approx)
     else:
         cnt = []
-    return areas,res,cnt,
+    return areas,res,cnt
 
 #輪郭の重心を計算
 def center_of_image(image):
     areas,_,_ = getTarget(image)
     if areas:
-        M = cv2.moments(areas[0])
-        x = int(M['m10']/M['m00'])
-        y = int(M['m01']/M['m00'])
+        global x ,y
+        try :
+            M = cv2.moments(areas[0])
+            x = int(M['m10']/M['m00'])
+            y = int(M['m01']/M['m00'])
+        except ZeroDivisionError:
+            print ("zero division")
     else:
         x=0
         y=0
+
     return x,y
 
 
 #backをforeを中心から(x,y)移動させて重ね合わせる
-def clip_image(x, y):
+def clip_image(x, y, img):
     global back
     h1, w1, _ = back.shape
     h2, w2, _ = img.shape
@@ -189,13 +194,13 @@ def clip_image(x, y):
 
 #imgに青い輪郭がないものを選ぶとエラーが出る．
 #img = cv2.imread("bluerect2.png",1)
-img = cv2.imread("blue.png",1)
+img1 = cv2.imread("blue.png",1)
 
 back = cv2.imread("back.png",1)
 cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
-areas0,res0,_= getTarget(img)
-cv2.drawContours(res0, areas0, -1, (0,0,255), 3)
-cv2.imshow("img0",img)
+#areas0,res0,_= getTarget(img1)
+#cv2.drawContours(res0, areas0, -1, (0,0,255), 3)
+#cv2.imshow("img0",img1)
 
 #↓ラズパイ(opencv2)の方でやらないとなぜか動かない(PCはopencv3)
 #cv2.setWindowProperty("img", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
@@ -234,7 +239,7 @@ while capture.isOpened():
                         m2,n2 = back.shape[:2]
                         #背景をリセットしてからオーバーレイ
                         back = cv2.imread("back.png",1)
-                        clip_image(x_diff*m2/m1,y_diff*m2/m1)
+                        clip_image(x_diff*m2/m1,y_diff*m2/m1,img1)
 
                         cv2.circle(res, (x,y), 10, (0, 0, 255), -1)
                         #frame上の重心をimg上の重心に変換
