@@ -1,3 +1,4 @@
+#coding: UTF-8
 # GPIOを制御するライブラリ
 import wiringpi
 # タイマーのライブラリ
@@ -14,6 +15,8 @@ wiringpi.pinMode( button_pin, 0 )
 # 3.3Vの場合には「2」（プルアップ）
 # 0Vの場合は「1」と設定する（プルダウン）
 wiringpi.pullUpDnControl( button_pin, 2 )
+img = cv2.imread("blue.png")
+img1 = cv2.imread("calibration.png")
 
 # whileの処理は字下げをするとループの範囲になる（らしい）
 while True:
@@ -23,8 +26,11 @@ while True:
     if( wiringpi.digitalRead(button_pin) == 0 ):
         # 0V(0)の場合に表示
         print ("Switch ON")
+        img = img1
+        # cv2.imshow("img",img)
     else:
         # 3.3V(1)の場合に表示
         print ("Switch OFF")
-
-    time.sleep(1)
+        cv2.imshow("img",img)
+        cv2.waitKey(100)
+    time.sleep(0.05)
