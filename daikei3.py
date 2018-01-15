@@ -9,7 +9,7 @@ import sys
 
 #射影変換行列を計算するキャリブレーション用関数
 def calibration(areas):
-    pts1 = np.float32([[446,171],[790,173],[446,514],[788,514]]) #areasと同じ順　(左上，右上，左下，右下)
+    pts1 = np.float32([[135,65],[400,65],[135,330],[400,330]]) #areasと同じ順　(左上，右上，左下，右下)
     #areasの格納が普通の配列じゃないので，配列に書き直す．
     x0=areas[0][0][0][0]
     y0=areas[0][0][0][1]
@@ -58,7 +58,7 @@ def getTarget(image):
 
     # Bitwise-AND mask and original image(白黒画像の中で，白の部分だけ筒抜けになって映る)
     res = cv2.bitwise_and(frame,frame, mask= mask)
-    image,contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     areas = []
     contours.sort(key=cv2.contourArea,reverse=True)
     if  contours:
@@ -84,8 +84,8 @@ def getBlue(frame):
     mask = cv2.inRange(smooth, lower_blue, upper_blue)
 
     # Bitwise-AND mask and original image(白黒画像の中で，白の部分だけ筒抜けになって映る)
-    res = cv2.bitwise_and(image,image, mask= mask)
-    image,contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    res = cv2.bitwise_and(frame,frame, mask= mask)
+    contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     areas = []
     contours.sort(key=cv2.contourArea,reverse=True)
     if  contours:
@@ -148,12 +148,12 @@ def clip_image(x, y, back, fore):
 """
 
 #無地
-back1 = cv2.imread("back.png",1)
+back = cv2.imread("back.png",1)
 
 
 img_right = cv2.imread("right1.png",1)
 img_left = cv2.imread("left1.png",1)
-img_stop = cv2.imread("stop1.ping",1)
+img_stop = cv2.imread("stop1.png",1)
 img_rest = cv2.imread("rest1.png",1)
 
 
@@ -163,7 +163,7 @@ cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
 # cv2.setWindowProperty("img", cv2.WND_PROP_FULLSCREEN, cv2.cv.CV_WINDOW_FULLSCREEN)
 
 
-button_pin1 = 7 # 7番端子
+button_pin1 = 4 # 7番端子
 button_pin2 = 17 # 11番端子
 button_pin3 = 27 # 13番端子
 button_pin4 = 22 # 15番端子
@@ -217,21 +217,32 @@ while capture.isOpened():
                 cv2.waitKey(1)
                 areas,_,_=getBlue(frame)
                 print "areas:{}".format(areas)
-                if len(areas[0])==4:
+                if areas != [] and len(areas[0])==4:
                     M = calibration(areas)
                     print "M:{}".format(M)
-                count2 = count2+1
-                print count2
+                count = count+1
+                print count
                 time.sleep(0.5)
-                if count2>5:
+                if count>5:
+                    if not M =[]:
+                        img_right = cv2.imread("right1.png",1)
+                        img_left = cv2.imread("left1.png",1)
+                        img_stop = cv2.imread("stop1.png",1)
+                        img_rest = cv2.imread("rest1.png",1)
+
+                        img_right = revision(M,img_right)
+                        img_left = revision(M,img_left)
+                        img_stop = revision(M,img_stop)
+                        img_rest = revision(M,img_rest)
+                        print ("Calibration Finished")
+                    else:
+                        print ("Calibration Failed")
+                    count = 0
                     break
 
         #スイッチ2(右)が押された場合．
         if wiringpi.digitalRead(button_pin2) == 0:
             print ("turnright")
-            #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if not M==0:
-                img_right = revision(M,img_right)
             #frameから輪郭をとる
             if areas:
                 if len(areas[0])==4 :
@@ -249,16 +260,13 @@ while capture.isOpened():
                             m2,n2 = back.shape[:2]
                             #背景をリセットしてからオーバーレイ
                             back = cv2.imread("back.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_right)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back,img_right)
 
             cv2.imshow('img',back)
 
         #スイッチ3(左)が押された場合．
         if wiringpi.digitalRead(button_pin3) == 0:
             print ("turnright")
-            #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if not M==0:
-                img_left = revision(M,img_left)
             #frameから輪郭をとる
             if areas:
                 if len(areas[0])==4 :
@@ -276,16 +284,13 @@ while capture.isOpened():
                             m2,n2 = back.shape[:2]
                             #背景をリセットしてからオーバーレイ
                             back = cv2.imread("back.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_left)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back,img_left)
 
             cv2.imshow('img',back)
 
         #スイッチ4(stop)が押された場合．
-        if wiringpi.digitalRead(button_pin4) == 0:
+        elif wiringpi.digitalRead(button_pin4) == 0:
             print ("turnright")
-            #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if not M==0:
-                img_stop = revision(M,img_(stop))
             #frameから輪郭をとる
             if areas:
                 if len(areas[0])==4 :
@@ -303,15 +308,13 @@ while capture.isOpened():
                             m2,n2 = back.shape[:2]
                             #背景をリセットしてからオーバーレイ
                             back = cv2.imread("back.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_stop)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back,img_stop)
 
             cv2.imshow('img',back)
 
         #スイッチ5(rest)が押された場合．
-        if wiringpi.digitalRead(button_pin5) == 0:
+        elif wiringpi.digitalRead(button_pin5) == 0:
             print ("rest")
-            #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if not M==0:
                 img_rest = revision(M,img_rest)
             #frameから輪郭をとる
             if areas:
@@ -330,15 +333,15 @@ while capture.isOpened():
                             m2,n2 = back.shape[:2]
                             #背景をリセットしてからオーバーレイ
                             back = cv2.imread("back.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_rest)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back,img_rest)
 
             cv2.imshow('img',back)
 
         #スイッチOFFのとき．
-        if wiringpi.digitalRead(button_pin2) == 0:
+        else wiringpi.digitalRead(button_pin2) == 0:
             print ("switch off")
             back = cv2.imread("back.png",1)
-            cv2.imshow('img',back1)
+            cv2.imshow('img',back)
 
 
 #waitKeyの引数を0以下にするとキー入力する毎に画面がframeが更新する．
