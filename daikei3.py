@@ -237,9 +237,9 @@ while capture.isOpened():
                     print "M:{}".format(M)
                 count = count+1
                 print count
-                time.sleep(0.5)
+                time.sleep(0.6)
                 if count>5:
-                    if not M =[]:
+                    if not M ==[]:
 
                         img_right1 = cv2.imread("right1.png",1)
                         img_right2 = cv2.imread("right2.png",1)
@@ -275,7 +275,7 @@ while capture.isOpened():
                     break
 
         #スイッチ2(右)が押された場合．
-        if wiringpi.digitalRead(button_pin2) == 0:
+        elif wiringpi.digitalRead(button_pin2) == 0:
             print ("turnright")
             #frameから輪郭をとる
             if areas:
@@ -313,7 +313,7 @@ while capture.isOpened():
             cv2.waitKey(800)
 
         #スイッチ3(左)が押された場合．
-        if wiringpi.digitalRead(button_pin3) == 0:
+        elif wiringpi.digitalRead(button_pin3) == 0:
             print ("turnright")
             #frameから輪郭をとる
             if areas:
@@ -347,7 +347,7 @@ while capture.isOpened():
 
         #スイッチ4(stop)が押された場合．
         elif wiringpi.digitalRead(button_pin4) == 0:
-            print ("turnright")
+            print ("stop")
             #frameから輪郭をとる
             if areas:
                 if len(areas[0])==4 :
@@ -410,7 +410,7 @@ while capture.isOpened():
 
 
         #スイッチOFFのとき．
-        else wiringpi.digitalRead(button_pin2) == 0:
+        else :
             print ("switch off")
             back = cv2.imread("back.png",1)
             cv2.imshow('img',back)
