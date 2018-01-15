@@ -151,10 +151,10 @@ def clip_image(x, y, back, fore):
 back1 = cv2.imread("back.png",1)
 
 
-img_right = cv2.imread("back.png",1)
-img_left = cv2.imread("",1)
-img_stop = cv2.imread("",1)
-img_ = cv2.imread("",1)
+img_right = cv2.imread("right1.png",1)
+img_left = cv2.imread("left1.png",1)
+img_stop = cv2.imread("stop1.ping",1)
+img_rest = cv2.imread("rest1.png",1)
 
 
 calibration_img = cv2.imread("calibration.png",1)
@@ -230,7 +230,7 @@ while capture.isOpened():
         if wiringpi.digitalRead(button_pin2) == 0:
             print ("turnright")
             #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　not M==0:
+            if not M==0:
                 img_right = revision(M,img_right)
             #frameから輪郭をとる
             if areas:
@@ -257,7 +257,7 @@ while capture.isOpened():
         if wiringpi.digitalRead(button_pin3) == 0:
             print ("turnright")
             #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　not M==0:
+            if not M==0:
                 img_left = revision(M,img_left)
             #frameから輪郭をとる
             if areas:
@@ -284,7 +284,7 @@ while capture.isOpened():
         if wiringpi.digitalRead(button_pin4) == 0:
             print ("turnright")
             #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　not M==0:
+            if not M==0:
                 img_stop = revision(M,img_(stop))
             #frameから輪郭をとる
             if areas:
@@ -311,7 +311,7 @@ while capture.isOpened():
         if wiringpi.digitalRead(button_pin5) == 0:
             print ("rest")
             #キャリブレーションボタンを押していた場合，画像を台形補正．
-            if　not M==0:
+            if not M==0:
                 img_rest = revision(M,img_rest)
             #frameから輪郭をとる
             if areas:
