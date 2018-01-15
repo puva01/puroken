@@ -101,9 +101,12 @@ def getBlue(frame):
 def center_of_image(image):
     areas,_,_ = getTarget(image)
     if areas:
-        M = cv2.moments(areas[0])
-        x = int(M['m10']/M['m00'])
-        y = int(M['m01']/M['m00'])
+        try:
+            M = cv2.moments(areas[0])
+            x = int(M['m10']/M['m00'])
+            y = int(M['m01']/M['m00'])
+        except ZeroDivisionError:
+            print ("zerodivision")
     else:
         x=0
         y=0
@@ -148,13 +151,25 @@ def clip_image(x, y, back, fore):
 """
 
 #無地
-back = cv2.imread("back.png",1)
+back1 = cv2.imread("back.png",1)
+back2 = cv2.imread("back.png",1)
+back3 = cv2.imread("back.png",1)
+back4 = cv2.imread("back.png",1)
 
 
-img_right = cv2.imread("right1.png",1)
-img_left = cv2.imread("left1.png",1)
-img_stop = cv2.imread("stop1.png",1)
-img_rest = cv2.imread("rest1.png",1)
+img_right1 = cv2.imread("right1.png",1)
+img_right2 = cv2.imread("right2.png",1)
+img_right3 = cv2.imread("right3.png",1)
+img_right4 = cv2.imread("right4.png",1)
+img_left1 = cv2.imread("left1.png",1)
+img_left2 = cv2.imread("left2.png",1)
+img_left3 = cv2.imread("left3.png",1)
+img_left4 = cv2.imread("left4.png",1)
+img_stop1 = cv2.imread("stop1.png",1)
+img_stop2 = cv2.imread("stop2.png",1)
+img_stop3 = cv2.imread("stop3.png",1)
+img_rest1 = cv2.imread("rest1.png",1)
+img_rest2 = cv2.imread("rest2.png",1)
 
 
 calibration_img = cv2.imread("calibration.png",1)
@@ -225,15 +240,34 @@ while capture.isOpened():
                 time.sleep(0.5)
                 if count>5:
                     if not M =[]:
-                        img_right = cv2.imread("right1.png",1)
-                        img_left = cv2.imread("left1.png",1)
-                        img_stop = cv2.imread("stop1.png",1)
-                        img_rest = cv2.imread("rest1.png",1)
 
-                        img_right = revision(M,img_right)
-                        img_left = revision(M,img_left)
-                        img_stop = revision(M,img_stop)
-                        img_rest = revision(M,img_rest)
+                        img_right1 = cv2.imread("right1.png",1)
+                        img_right2 = cv2.imread("right2.png",1)
+                        img_right3 = cv2.imread("right3.png",1)
+                        img_right4 = cv2.imread("right4.png",1)
+                        img_left1 = cv2.imread("left1.png",1)
+                        img_left2 = cv2.imread("left2.png",1)
+                        img_left3 = cv2.imread("left3.png",1)
+                        img_left4 = cv2.imread("left4.png",1)
+                        img_stop1 = cv2.imread("stop1.png",1)
+                        img_stop2 = cv2.imread("stop2.png",1)
+                        img_stop3 = cv2.imread("stop3.png",1)
+                        img_rest1 = cv2.imread("rest1.png",1)
+                        img_rest2 = cv2.imread("rest2.png",1)
+
+                        img_right1 = revision(M,img_right1)
+                        img_right2 = revision(M,img_right2)
+                        img_right3 = revision(M,img_right3)
+                        img_right4 = revision(M,img_right4)
+                        img_left1 = revision(M,img_left1)
+                        img_left2 = revision(M,img_left2)
+                        img_left3 = revision(M,img_left3)
+                        img_left4 = revision(M,img_left4)
+                        img_stop1 = revision(M,img_stop1)
+                        img_stop2 = revision(M,img_stop2)
+                        img_stop3 = revision(M,img_stop3)
+                        img_rest1 = revision(M,img_rest1)
+                        img_rest2 = revision(M,img_rest2)
                         print ("Calibration Finished")
                     else:
                         print ("Calibration Failed")
@@ -253,16 +287,30 @@ while capture.isOpened():
                         l.append(x)
                         m.append(y)
                         count +=1
-                        if count>4:
-                            x_diff = l[count-1]-l[4]
-                            y_diff = m[count-1]-m[4]
+                        if count>1:
+                            x_diff = l[count-1]-l[1]
+                            y_diff = m[count-1]-m[1]
                             m1,n1 = frame.shape[:2]
                             m2,n2 = back.shape[:2]
                             #背景をリセットしてからオーバーレイ
-                            back = cv2.imread("back.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back,img_right)
+                            back1 = cv2.imread("back.png",1)
+                            back2 = cv2.imread("back.png",1)
+                            back3 = cv2.imread("back.png",1)
+                            back4 = cv2.imread("back.png",1)
 
-            cv2.imshow('img',back)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_right1)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back2,img_right2)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back3,img_right3)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back4,img_right4)
+
+            cv2.imshow('img',back1)
+            cv2.waitKey(500)
+            cv2.imshow('img',back2)
+            cv2.waitKey(500)
+            cv2.imshow('img',back3)
+            cv2.waitKey(500)
+            cv2.imshow('img',back4)
+            cv2.waitKey(800)
 
         #スイッチ3(左)が押された場合．
         if wiringpi.digitalRead(button_pin3) == 0:
@@ -283,10 +331,19 @@ while capture.isOpened():
                             m1,n1 = frame.shape[:2]
                             m2,n2 = back.shape[:2]
                             #背景をリセットしてからオーバーレイ
-                            back = cv2.imread("back.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back,img_left)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_left1)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back2,img_left2)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back3,img_left3)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back4,img_left4)
 
-            cv2.imshow('img',back)
+            cv2.imshow('img',back1)
+            cv2.waitKey(500)
+            cv2.imshow('img',back2)
+            cv2.waitKey(500)
+            cv2.imshow('img',back3)
+            cv2.waitKey(500)
+            cv2.imshow('img',back4)
+            cv2.waitKey(800)
 
         #スイッチ4(stop)が押された場合．
         elif wiringpi.digitalRead(button_pin4) == 0:
@@ -301,21 +358,32 @@ while capture.isOpened():
                         l.append(x)
                         m.append(y)
                         count +=1
-                        if count>4:
-                            x_diff = l[count-1]-l[4]
-                            y_diff = m[count-1]-m[4]
+                        if count>1:
+                            x_diff = l[count-1]-l[1]
+                            y_diff = m[count-1]-m[1]
                             m1,n1 = frame.shape[:2]
                             m2,n2 = back.shape[:2]
                             #背景をリセットしてからオーバーレイ
-                            back = cv2.imread("back.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back,img_stop)
+                            back1 = cv2.imread("back.png",1)
+                            back2 = cv2.imread("back.png",1)
+                            back3 = cv2.imread("back.png",1)
 
-            cv2.imshow('img',back)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_stop1)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back2,img_stop2)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back3,img_stop3)
+
+
+            cv2.imshow('img',back1)
+            cv2.waitKey(500)
+            cv2.imshow('img',back2)
+            cv2.waitKey(500)
+            cv2.imshow('img',back3)
+            cv2.waitKey(500)
+
 
         #スイッチ5(rest)が押された場合．
         elif wiringpi.digitalRead(button_pin5) == 0:
             print ("rest")
-                img_rest = revision(M,img_rest)
             #frameから輪郭をとる
             if areas:
                 if len(areas[0])==4 :
@@ -326,16 +394,20 @@ while capture.isOpened():
                         l.append(x)
                         m.append(y)
                         count +=1
-                        if count>4:
-                            x_diff = l[count-1]-l[4]
-                            y_diff = m[count-1]-m[4]
+                        if count>1:
+                            x_diff = l[count-1]-l[1]
+                            y_diff = m[count-1]-m[1]
                             m1,n1 = frame.shape[:2]
                             m2,n2 = back.shape[:2]
                             #背景をリセットしてからオーバーレイ
-                            back = cv2.imread("back.png",1)
-                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back,img_rest)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back1,img_rest1)
+                            clip_image(x_diff*m2/m1,y_diff*m2/m1,back2,img_rest2)
 
-            cv2.imshow('img',back)
+            cv2.imshow('img',back1)
+            cv2.waitKey(200)
+            cv2.imshow('img',back2)
+            cv2.waitKey(2000)
+
 
         #スイッチOFFのとき．
         else wiringpi.digitalRead(button_pin2) == 0:
