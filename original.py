@@ -226,8 +226,34 @@ while capture.isOpened():
         areas,res,_= getTarget(frame)
         #キャリブレーションボタンが押された場合(右)3秒間，射影変換行列を計算
         if wiringpi.digitalRead(button_pin1) == 0 :
+            #3秒間投影し，Mを計算
+            while True:
+                cv2.imshow('img',calibration_img)
+                cv2.waitKey(1)
+                time.sleep(0.6)
+                count =count+1
+                if count>5:
+                    break
+            pts1 = np.float32([[135,65],[400,65],[135,330],[400,330]])
+            pts2 = np.float32([[105,45],[430,45],[135,330],[400,330]])
+            M = cv2.getPerspectiveTransform(pts1,pts2)
+
+            img_right1 = revision(M,img_right1)
+            img_right2 = revision(M,img_right2)
+            img_right3 = revision(M,img_right3)
+            img_right4 = revision(M,img_right4)
+            img_left1 = revision(M,img_left1)
+            img_left2 = revision(M,img_left2)
+            img_left3 = revision(M,img_left3)
+            img_left4 = revision(M,img_left4)
+            img_stop1 = revision(M,img_stop1)
+            img_stop2 = revision(M,img_stop2)
+            img_stop3 = revision(M,img_stop3)
+            img_rest1 = revision(M,img_rest1)
+            img_rest2 = revision(M,img_rest2)
+
             pygame.mixer.init()
-            pygame.mixer.music.load('test.mp3')
+            pygame.mixer.music.load('calibration_finished.mp3')
             pygame.mixer.music.play(1) # ()内は再生回数 -1:ループ再生
             print ("calibrating...")
 
